@@ -1,0 +1,11 @@
+# Local corpus data
+data/
+
+# Python local files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# macOS metadata
+.DS_Store
