@@ -1,5 +1,7 @@
 # Local corpus data
-data/
+data/*
+!data/public_queries.json
+data/Wikipedia Entries/
 
 # Python local files
 __pycache__/

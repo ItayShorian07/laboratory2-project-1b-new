@@ -15,11 +15,13 @@ class Chunk:
 
 
 def chunk_entry(record: Dict[str, Any]) -> List[Chunk]:
-    """
-    Split one corpus entry into retrieval units.
+    """Split one corpus entry into retrieval units.
 
-    Default: single chunk per page (no chunking). Override for fixed-size or
-    semantic chunking strategies.
+    Args:
+        record: A corpus page record.
+
+    Returns:
+        A single chunk containing the full page text.
     """
     page_id = int(record["page_id"])
     text = entry_text(record)
@@ -27,6 +29,14 @@ def chunk_entry(record: Dict[str, Any]) -> List[Chunk]:
 
 
 def chunk_corpus(records: List[Dict[str, Any]]) -> List[Chunk]:
+    """Chunk all corpus records.
+
+    Args:
+        records: Corpus page records.
+
+    Returns:
+        A flat list of retrieval chunks.
+    """
     chunks: List[Chunk] = []
     for record in records:
         chunks.extend(chunk_entry(record))
