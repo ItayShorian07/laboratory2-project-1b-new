@@ -1,8 +1,14 @@
-"""Optional preprocessing and chunking."""
+"""Retrieval units.
+
+The corpus answer pages are short synthetic entries whose key fact fits inside
+the embedding context window, so splitting them into windows only dilutes the
+page signal and lets long distractors win on a stray window. Whole-page units
+scored higher on the public queries, so the production unit is one chunk per page.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 from utils import entry_text
 
@@ -15,28 +21,11 @@ class Chunk:
 
 
 def chunk_entry(record: Dict[str, Any]) -> List[Chunk]:
-    """Split one corpus entry into retrieval units.
-
-    Args:
-        record: A corpus page record.
-
-    Returns:
-        A single chunk containing the full page text.
-    """
-    page_id = int(record["page_id"])
-    text = entry_text(record)
-    return [Chunk(page_id=page_id, chunk_id=0, text=text)]
+    """Default retrieval unit: the whole page (title + content)."""
+    return [Chunk(page_id=int(record["page_id"]), chunk_id=0, text=entry_text(record))]
 
 
-def chunk_corpus(records: List[Dict[str, Any]]) -> List[Chunk]:
-    """Chunk all corpus records.
-
-    Args:
-        records: Corpus page records.
-
-    Returns:
-        A flat list of retrieval chunks.
-    """
+def chunk_corpus(records: Iterable[Dict[str, Any]]) -> List[Chunk]:
     chunks: List[Chunk] = []
     for record in records:
         chunks.extend(chunk_entry(record))
