@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import List
 
-from index import build_index
-from retrieve import search_batch
+from core.index import build_index
+from core.retrieve import search_batch
 
 
 def run(queries: List[str]) -> List[List[int]]:

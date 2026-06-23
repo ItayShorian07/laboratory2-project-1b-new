@@ -19,9 +19,10 @@ The pipeline combines two simple retrieval signals:
 2. Lexical BM25 retrieval over the full page text.
 
 At query time, both methods return candidate pages. Their scores are min-max
-normalized per query and averaged. This keeps the implementation general: the
-public queries are used only for evaluation, not for lookup tables or
-query-specific rules.
+normalized per query and blended. The code is organized under `core/` by
+pipeline stage: chunking, embedding, indexing, lexical retrieval, fusion, and
+query-time service. The optional reranker code is present but disabled in the
+submitted config, keeping the final run simple and stable.
 
 ## Artifacts
 
@@ -29,9 +30,12 @@ The autograder does not rebuild the index, so these files must be committed:
 
 | Path | Format | Purpose |
 | --- | --- | --- |
-| `artifacts/index_vectors.npy` | NumPy float32 array | Dense MiniLM page embeddings. |
-| `artifacts/index_meta.json` | JSON | Page IDs and dense index metadata. |
-| `artifacts/lexical_index.pkl.gz` | gzip-compressed pickle | BM25 postings, title postings, and document lengths. |
+| `artifacts/page_vectors.npy` | NumPy float32 array | Dense MiniLM page embeddings. |
+| `artifacts/page_ids.npy` | NumPy int64 array | Page IDs aligned to vector rows. |
+| `artifacts/page_texts.npy` | NumPy object array | Truncated page text used by optional reranking. |
+| `artifacts/bm25_index.npz` | NumPy archive | BM25 postings and weights. |
+| `artifacts/bm25_index.meta.json` | JSON | BM25 vocabulary and metadata. |
+| `artifacts/retrieval_config.json` | JSON | Fusion and optional reranker settings. |
 
 ## Build Index
 
@@ -54,8 +58,8 @@ Current public result after the query-set fix:
 
 ```text
 public_queries=29
-mean_ndcg@10=0.3916
-query_phase_time=2.81s
+mean_ndcg@10=0.4467
+query_phase_time=0.36s
 ```
 
 ## Submit
