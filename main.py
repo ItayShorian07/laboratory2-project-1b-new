@@ -1,8 +1,8 @@
-"""
-Section B entry point.
+"""Section B entry point.
 
-The autograder calls run(queries) once with all evaluation queries.
-Query embedding + retrieval must complete within the time limit (GPU available).
+The autograder calls ``run(queries)`` once with all evaluation queries; query
+embedding + retrieval + reranking must complete within the time limit (GPU
+available at grading). Running this module as a script builds the offline index.
 """
 from __future__ import annotations
 
@@ -15,17 +15,14 @@ from core.retrieve import search_batch
 def run(queries: List[str]) -> List[List[int]]:
     """Rank corpus pages for each query.
 
-    Args:
-        queries: Batch of query strings.
-
-    Returns:
-        One ranked list of page_id values per query, most relevant first.
+    Returns one ranked list of ``page_id`` per query, most relevant first; only
+    the first 10 IDs per list are scored (mean NDCG@10).
     """
     return search_batch(queries)
 
 
 def build_offline_index() -> None:
-    """Build the submitted artifacts locally before grading."""
+    """Run once locally to create artifacts/ (not timed at grading)."""
     build_index()
 
 
