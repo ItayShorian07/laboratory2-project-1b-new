@@ -1,13 +1,4 @@
-"""Dev-only: Optuna study over all retrieval hyperparameters.
-
-Searches on cached score matrices (dev/optuna_prep.npz) so each trial is pure
-numpy. Tunes: BM25 (k1,b) [grid], fusion alpha, reranker blend weight, and
-reranker pool depth. Objective = mean NDCG@10 on the 29 public queries.
-
-NOTE: 29 queries is a tiny validation set; the winner is re-checked with the
-real scripts/eval_public.py before adoption, and a bootstrap CI quantifies how
-much of any gain is noise.
-"""
+"""Tune retrieval settings with Optuna."""
 from __future__ import annotations
 
 import sys
@@ -18,7 +9,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import optuna  # noqa: E402
+import optuna
 
 PREP = ROOT / "dev" / "cache" / "optuna_prep.npz"
 N_TRIALS = 600
@@ -57,6 +48,8 @@ def ndcg10(ranked_ids, gold_set):
 
 
 class Data:
+    """Cached optimization data."""
+
     def __init__(self):
         z = np.load(PREP)
         self.dense = z["dense"]
@@ -96,7 +89,6 @@ def main():
         return
     data = Data()
 
-    # Reference: current production config within this cached approximation.
     cur_g = next(i for i, (k1, b) in enumerate(data.grid)
                  if abs(k1 - 1.5) < 1e-6 and abs(b - 0.75) < 1e-6)
     cur, cur_miss = data.score(cur_g, 0.6, 0.5, 100, count_miss=True)
@@ -121,7 +113,6 @@ def main():
     print(f"best params     = k1={k1}, b={b}, alpha={bp['alpha']:.3f}, "
           f"weight={bp['weight']:.3f}, pool={bp['pool']}  (CE misses={miss})")
 
-    # Bootstrap CI of (best - current) over queries to gauge noise.
     rng = np.random.default_rng(0)
     fb = _per_query(data, g, bp["alpha"], bp["weight"], bp["pool"])
     fc = _per_query(data, cur_g, 0.6, 0.5, 100)
@@ -137,7 +128,6 @@ def main():
     else:
         print("=> gain is within noise; prefer robust defaults / re-validate.")
 
-    # Top-10 trials to eyeball stability of the optimum.
     print("\ntop trials:")
     for t in sorted(study.trials, key=lambda t: -(t.value or 0))[:10]:
         p = t.params; k1, b = data.grid[p["grid"]]

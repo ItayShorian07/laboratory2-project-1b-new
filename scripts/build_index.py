@@ -1,4 +1,4 @@
-"""Build artifacts/ from the full corpus (offline, not timed)."""
+"""Build retrieval artifacts from the corpus."""
 from __future__ import annotations
 
 import sys

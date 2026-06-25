@@ -1,8 +1,4 @@
-"""
-Evaluation utilities — READ-ONLY. Do not modify this file.
-
-Computes mean NDCG@10 for a batch of ranked page_id lists.
-"""
+"""Evaluation helpers."""
 from __future__ import annotations
 
 import json
@@ -23,6 +19,15 @@ __all__ = [
 
 
 def dcg_at_k(gains: Sequence[float], k: int = K_EVAL) -> float:
+    """Compute discounted cumulative gain.
+
+    Args:
+        gains: Relevance gains in rank order.
+        k: Evaluation depth.
+
+    Returns:
+        Discounted cumulative gain.
+    """
     gains = list(gains[:k])
     if not gains:
         return 0.0
@@ -37,7 +42,16 @@ def ndcg_at_k(
     relevant_ids: Set[int],
     k: int = K_EVAL,
 ) -> float:
-    """Binary relevance NDCG@k; duplicates and invalid IDs score 0."""
+    """Compute normalized discounted gain.
+
+    Args:
+        ranked_ids: Predicted page ids.
+        relevant_ids: Relevant page ids.
+        k: Evaluation depth.
+
+    Returns:
+        Normalized discounted gain.
+    """
     seen: Set[int] = set()
     gains: List[float] = []
     for pid in ranked_ids:
@@ -64,6 +78,16 @@ def mean_ndcg_at_k(
     all_relevant: Sequence[Set[int]],
     k: int = K_EVAL,
 ) -> float:
+    """Compute mean normalized discounted gain.
+
+    Args:
+        all_ranked: Predicted rankings.
+        all_relevant: Relevant page id sets.
+        k: Evaluation depth.
+
+    Returns:
+        Mean score across queries.
+    """
     if not all_ranked:
         return 0.0
     scores = [
@@ -74,6 +98,14 @@ def mean_ndcg_at_k(
 
 
 def load_query_file(path: Path) -> List[Dict[str, Any]]:
+    """Load an evaluation query file.
+
+    Args:
+        path: Query file path.
+
+    Returns:
+        Query rows with relevant page id sets.
+    """
     rows = json.loads(path.read_text(encoding="utf-8"))
     for row in rows:
         row["relevant_page_ids"] = {
@@ -89,7 +121,17 @@ def evaluate_run(
     *,
     k: int = K_EVAL,
 ) -> Dict[str, float]:
-    """Call run_fn(queries) and return mean NDCG@k."""
+    """Evaluate a ranking function.
+
+    Args:
+        queries: Query texts.
+        ground_truth: Relevant page id sets.
+        run_fn: Function that returns rankings.
+        k: Evaluation depth.
+
+    Returns:
+        Evaluation metrics.
+    """
     ranked = run_fn(queries)
     if len(ranked) != len(queries):
         raise ValueError(

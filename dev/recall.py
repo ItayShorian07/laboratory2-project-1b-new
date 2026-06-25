@@ -1,8 +1,4 @@
-"""Dev-only: recall@k of the hybrid candidate generator on the public queries.
-
-A reranker can only fix ordering among the candidates it is given. This measures
-how deep we must retrieve so the gold pages are (almost) always in the pool.
-"""
+"""Measure candidate recall."""
 from __future__ import annotations
 
 import sys
@@ -14,11 +10,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows  # noqa: E402
-from utils import load_public_queries  # noqa: E402
-import faiss  # noqa: E402
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows
+from utils import load_public_queries
+import faiss
 
 
 def main() -> None:
@@ -43,7 +39,6 @@ def main() -> None:
     print(f"scored in {time.time()-t0:.1f}s")
 
     page_ids = idx.page_ids
-    # Full ranking per query (descending).
     order = np.argsort(-fused, axis=1)
 
     ks = [10, 20, 30, 50, 100, 150, 200, 300, 500, 1000]
@@ -63,7 +58,6 @@ def main() -> None:
                 full += 1
         print(f"{k:>6}  {np.mean(recs):>11.4f}  {full:>5}/{len(recs)}")
 
-    # Also: for each gold doc, the best (min) rank achieved across its query.
     worst_needed = 0
     for qi in range(len(queries)):
         g = gold[qi]

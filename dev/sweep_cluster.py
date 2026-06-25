@@ -1,10 +1,4 @@
-"""Dev-only: add entity-level (sibling) aggregation on top of fusion.
-
-Pages of one synthetic entity share an identical first sentence ("History of X"
-restates X's intro). Grouping by first sentence recovers those entities; we then
-lift every page by the best-scoring sibling so a fact stated on one page of the
-entity surfaces the whole entity (its gold pages) together.
-"""
+"""Sweep cluster based score boosts."""
 from __future__ import annotations
 
 import json
@@ -18,15 +12,15 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file, mean_ndcg_at_k  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH, iter_entries  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file, mean_ndcg_at_k
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH, iter_entries
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
-MIN_FS = 40       # min first-sentence length to form a cluster
-MAX_CLUSTER = 8   # ignore oversized (junk) clusters
+MIN_FS = 40
+MAX_CLUSTER = 8
 
 
 def minmax(m):
@@ -46,7 +40,6 @@ def build_clusters(page_ids):
         fs = first_sentence(recs[int(pid)])
         if len(fs) >= MIN_FS:
             groups[fs].append(col)
-    # cluster id per column; -1 if singleton/ignored.
     cluster_of = np.full(len(page_ids), -1, dtype=np.int64)
     cid = 0
     members = []
@@ -60,11 +53,20 @@ def build_clusters(page_ids):
 
 
 def cluster_boost(scores, members, beta):
-    """page' = (1-beta)*page + beta*max(sibling). Singletons unchanged."""
+    """Boost pages by cluster scores.
+
+    Args:
+        scores: Page scores.
+        members: Cluster member columns.
+        beta: Cluster score weight.
+
+    Returns:
+        Boosted scores.
+    """
     out = scores.copy()
     for cols in members:
         idx = np.asarray(cols)
-        cmax = scores[:, idx].max(axis=1, keepdims=True)  # (q,1)
+        cmax = scores[:, idx].max(axis=1, keepdims=True)
         out[:, idx] = (1 - beta) * scores[:, idx] + beta * cmax
     return out
 

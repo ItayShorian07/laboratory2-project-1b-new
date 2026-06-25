@@ -1,11 +1,4 @@
-"""Tokenization for the lexical index.
-
-Beyond plain lowercasing, two corpus-specific features make BM25 discriminate
-this corpus's facts: shared *decade* tokens (so a "1820s" query matches an
-exact-year page) and stemmed word *bigrams* (so phrases like "point guard" match
-as units). Alphabetic words are Porter-stemmed so a query word matches its
-morphological variants.
-"""
+"""Lexical tokenization."""
 from __future__ import annotations
 
 import re
@@ -13,13 +6,9 @@ from typing import Callable, List
 
 from .stemmer import PorterStemmer
 
-# Keep alphabetic words and numbers; preserve digit-group separators so a token
-# like "1,456,779" stays intact and matches between query and document.
 _TOKEN_RE = re.compile(r"[a-z]+|\d[\d,\.]*\d|\d")
-# A 4-digit year (1000-2099); emits the shared decade token (e.g. "1826" -> "182x").
 _YEAR_RE = re.compile(r"(1\d{3}|20\d{2})")
 
-# Default tokenizer features (module-level so dev sweeps can read/toggle them).
 STEM = True
 ADD_BIGRAMS = True
 
@@ -27,7 +16,7 @@ Tokenize = Callable[[str], List[str]]
 
 
 class Tokenizer:
-    """Lowercasing tokenizer with stemming, decade tokens, and word bigrams."""
+    """Creates lexical tokens."""
 
     def __init__(
         self,
@@ -44,9 +33,17 @@ class Tokenizer:
         return self.tokenize(text)
 
     def tokenize(self, text: str) -> List[str]:
+        """Tokenize text.
+
+        Args:
+            text: Text to tokenize.
+
+        Returns:
+            Lexical tokens.
+        """
         raw = _TOKEN_RE.findall(text.lower())
         tokens: List[str] = []
-        words: List[str] = []  # stemmed alphabetic words, for bigrams
+        words: List[str] = []
         for token in raw:
             if token.isalpha():
                 stemmed = self._stemmer.stem(token) if self._stem else token
@@ -64,5 +61,12 @@ _DEFAULT_TOKENIZER = Tokenizer()
 
 
 def tokenize(text: str) -> List[str]:
-    """Module-level facade over the default tokenizer (back-compat)."""
+    """Tokenize text.
+
+    Args:
+        text: Text to tokenize.
+
+    Returns:
+        Lexical tokens.
+    """
     return _DEFAULT_TOKENIZER.tokenize(text)

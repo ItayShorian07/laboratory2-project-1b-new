@@ -1,8 +1,4 @@
-"""Dev-only: comprehensive fusion sweep over page-dense, chunk-dense, BM25.
-
-Also reports the achievable NDCG ceiling given that duplicate query strings
-(twins) must receive identical rankings.
-"""
+"""Sweep combined retrieval signals."""
 from __future__ import annotations
 
 import itertools
@@ -17,10 +13,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import dcg_at_k, load_query_file, mean_ndcg_at_k, ndcg_at_k  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import dcg_at_k, load_query_file, mean_ndcg_at_k, ndcg_at_k
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
@@ -50,7 +46,15 @@ def evl(scores, page_ids, gt):
 
 
 def ceiling(queries: List[str], gts: Sequence[Set[int]]) -> float:
-    """Best mean NDCG@10 if identical query strings share one ranking."""
+    """Estimate the ceiling for duplicate queries.
+
+    Args:
+        queries: Query texts.
+        gts: Relevant page id sets.
+
+    Returns:
+        Mean ceiling score.
+    """
     groups = defaultdict(list)
     for i, q in enumerate(queries):
         groups[q].append(i)
@@ -67,7 +71,6 @@ def ceiling(queries: List[str], gts: Sequence[Set[int]]) -> float:
             for pid in g:
                 if pid not in seen:
                     seen.add(pid); union.append(pid); owner.append(mi)
-        # value per page = 1/idcg(owner); fill best positions greedily.
         vals = sorted(range(len(union)), key=lambda j: -1.0 / max(idcg[owner[j]], 1e-9))
         member_dcg = defaultdict(float)
         for pos, j in enumerate(vals[:K]):

@@ -1,4 +1,4 @@
-"""Dev-only: show top-10 retrieved pages vs gold for selected queries."""
+"""Inspect retrieved pages for selected queries."""
 from __future__ import annotations
 
 import json
@@ -10,10 +10,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
@@ -50,7 +50,6 @@ def main():
             star = "*GOLD*" if pid in gt[i] else "      "
             t = texts[id2idx[pid]][:60].replace("\n", " ")
             print(f"     {r+1:2d} {star} {pid:6d} {row[idx]:.3f}  {t}")
-        # gold ranks
         gr = {}
         full = np.argsort(-row)
         pos = {int(page_ids[j]): k for k, j in enumerate(full[:500])}

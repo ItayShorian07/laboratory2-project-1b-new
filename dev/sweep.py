@@ -1,9 +1,4 @@
-"""Dev-only: sweep retrieval configurations against the 50 public queries.
-
-Loads cached corpus embeddings (dev/build_cache.py) and the BM25 index, then
-reports mean NDCG@10 for dense-only, BM25-only, and several hybrid fusions so we
-can justify the final design empirically.
-"""
+"""Sweep retrieval settings."""
 from __future__ import annotations
 
 import json
@@ -17,10 +12,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file, mean_ndcg_at_k  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file, mean_ndcg_at_k
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
@@ -48,7 +43,16 @@ def minmax_rows(m: np.ndarray) -> np.ndarray:
 
 
 def rrf(dense: np.ndarray, lex: np.ndarray, k: int = 60) -> np.ndarray:
-    """Reciprocal rank fusion of two score matrices."""
+    """Fuse ranks from two score matrices.
+
+    Args:
+        dense: Dense scores.
+        lex: Lexical scores.
+        k: Rank offset.
+
+    Returns:
+        Fused scores.
+    """
     def ranks(m: np.ndarray) -> np.ndarray:
         order = np.argsort(-m, axis=1)
         r = np.empty_like(order)

@@ -1,9 +1,4 @@
-"""Dependency-free Porter stemmer (classic 1980 algorithm, stdlib only).
-
-Stemming the BM25 tokenizer lets a query word match its morphological variants
-in a page ("negotiator"/"negotiations" -> "negoti"), which raised both lexical
-recall and the fused NDCG@10 on this corpus.
-"""
+"""Porter word stemming."""
 from __future__ import annotations
 
 from typing import Dict
@@ -12,19 +7,26 @@ _VOWELS = "aeiou"
 
 
 class PorterStemmer:
-    """Reduces a word to its Porter stem; memoizes over a small vocabulary."""
+    """Reduces words to Porter stems."""
 
     def __init__(self) -> None:
         self._cache: Dict[str, str] = {}
 
     def stem(self, word: str) -> str:
+        """Stem a word.
+
+        Args:
+            word: Word to stem.
+
+        Returns:
+            Stemmed word.
+        """
         cached = self._cache.get(word)
         if cached is None:
             cached = self._stem(word)
             self._cache[word] = cached
         return cached
 
-    # --- letter classification -------------------------------------------------
     @staticmethod
     def _is_consonant(word: str, i: int) -> bool:
         c = word[i]
@@ -59,7 +61,7 @@ class PorterStemmer:
 
     @staticmethod
     def _cvc(word: str) -> bool:
-        """True if word ends consonant-vowel-consonant and the last isn't w/x/y."""
+        """Check a consonant vowel consonant ending."""
         if len(word) < 3:
             return False
         if not (
@@ -70,7 +72,6 @@ class PorterStemmer:
             return False
         return word[-1] not in "wxy"
 
-    # --- algorithm -------------------------------------------------------------
     _STEP2 = {
         "ational": "ate", "tional": "tion", "enci": "ence", "anci": "ance",
         "izer": "ize", "bli": "ble", "alli": "al", "entli": "ent",
@@ -148,7 +149,7 @@ class PorterStemmer:
         for suffix in self._STEP4:
             if w.endswith(suffix):
                 stem = w[: -len(suffix)]
-                if suffix == "ion":  # never reached; kept for fidelity to source
+                if suffix == "ion":
                     continue
                 if self._measure(stem) > 1:
                     w = stem
@@ -167,11 +168,16 @@ class PorterStemmer:
             w = w[:-1]
         return w
 
-
-# Module-level facade over a shared stemmer (back-compat for callers importing
-# ``stem``); the cache persists across calls.
 _DEFAULT_STEMMER = PorterStemmer()
 
 
 def stem(word: str) -> str:
+    """Stem a word.
+
+    Args:
+        word: Word to stem.
+
+    Returns:
+        Stemmed word.
+    """
     return _DEFAULT_STEMMER.stem(word)

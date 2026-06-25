@@ -1,4 +1,4 @@
-"""Load persisted artifacts into a :class:`LoadedIndex` (query-time, light)."""
+"""Load retrieval artifacts."""
 from __future__ import annotations
 
 import json
@@ -23,12 +23,17 @@ from .loaded_index import LoadedIndex
 
 
 class IndexLoader:
-    """Reads the artifact files written by :class:`IndexBuilder`."""
+    """Reads artifact files."""
 
     def __init__(self, artifacts_dir: Optional[Path] = None) -> None:
         self._root = artifacts_dir or ARTIFACTS_DIR
 
     def load(self) -> LoadedIndex:
+        """Load all retrieval artifacts.
+
+        Returns:
+            Loaded retrieval index.
+        """
         root = self._root
         page_vectors = np.ascontiguousarray(
             np.load(root / PAGE_VECTORS_NAME), dtype=np.float32
@@ -49,5 +54,12 @@ class IndexLoader:
 
 
 def load_index(artifacts_dir: Optional[Path] = None) -> LoadedIndex:
-    """Facade: load all artifacts needed by the retrieval pipeline."""
+    """Load a retrieval index.
+
+    Args:
+        artifacts_dir: Optional artifact directory.
+
+    Returns:
+        Loaded retrieval index.
+    """
     return IndexLoader(artifacts_dir).load()

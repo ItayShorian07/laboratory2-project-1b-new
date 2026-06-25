@@ -1,19 +1,4 @@
-"""Dev-only: precompute everything the Optuna study needs, so the search itself
-is pure-numpy and instant.
-
-Caches to dev/cache/optuna_prep.npz:
-  dense       (Q, n)      per-query dense inner-product scores
-  bm25_grid   (G, Q, n)   BM25 scores for each (k1,b) grid cell (stemmed index)
-  grid        (G, 2)      the (k1, b) values
-  ce          (Q, n)      cross-encoder scores, NaN where not in the candidate
-                          union (only top candidates are ever reranked)
-  gold/page_ids/queries
-
-BM25 is the slow part, so the corpus is tokenized ONCE into postings and each
-(k1,b) cell is then scored by cheap vector math (the weight formula matches
-lexical.py). The CE union spans the grid x an alpha sweep at depth 200, so any
-plausible (alpha,k1,b,pool<=150) trial's pool is covered.
-"""
+"""Prepare cached data for Optuna."""
 from __future__ import annotations
 
 import sys
@@ -25,12 +10,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.reranker import score_pairs  # noqa: E402
-from core.lexical import tokenize, MAX_DOC_TOKENS  # noqa: E402
-from utils import load_public_queries, iter_entries, entry_text  # noqa: E402
+import faiss
+from core.index import load_index
+from core.embed import embed_queries
+from core.reranker import score_pairs
+from core.lexical import tokenize, MAX_DOC_TOKENS
+from utils import load_public_queries, iter_entries, entry_text
 
 K1S = [1.0, 1.5, 2.0]
 BS = [0.4, 0.6, 0.75]
@@ -42,7 +27,7 @@ CE_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 def build_postings(docs):
     vocab = {}
-    postings_docs, postings_tf = [], []  # per term: lists
+    postings_docs, postings_tf = [], []
     dl = np.zeros(len(docs), dtype=np.float32)
     for i, text in enumerate(docs):
         toks = tokenize(text)[:MAX_DOC_TOKENS]
@@ -122,7 +107,6 @@ def main():
         print(f"  bm25 grid {gi+1}/{len(grid)} (k1={k1},b={b}) "
               f"{time.time()-t0:.1f}s", flush=True)
 
-    # Candidate union for CE.
     Dn = minmax_rows(dense)
     union_cols = [set() for _ in queries]
     for gi in range(len(grid)):

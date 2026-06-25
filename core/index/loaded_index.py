@@ -1,4 +1,4 @@
-"""In-memory artifacts consumed by the retrieval pipeline."""
+"""Loaded retrieval artifacts."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from ..lexical import BM25Index
 
 @dataclass
 class LoadedIndex:
-    """Everything ``RetrievalPipeline.from_index`` needs to assemble itself."""
+    """Data needed to create a retrieval pipeline."""
 
     page_vectors: np.ndarray
     page_ids: np.ndarray

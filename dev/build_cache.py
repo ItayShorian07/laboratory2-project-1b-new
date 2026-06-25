@@ -1,8 +1,4 @@
-"""Dev-only: embed the full corpus once and cache to dev/cache/ for fast sweeps.
-
-Not part of the submission pipeline; used during development to iterate on
-retrieval configurations without re-embedding 27k pages each time.
-"""
+"""Cache corpus embeddings for development."""
 from __future__ import annotations
 
 import json
@@ -15,8 +11,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_texts  # noqa: E402
-from utils import entry_text, iter_entries  # noqa: E402
+from core.embed import embed_texts
+from utils import entry_text, iter_entries
 
 CACHE = ROOT / "dev" / "cache"
 

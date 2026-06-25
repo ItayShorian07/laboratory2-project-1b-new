@@ -1,12 +1,4 @@
-"""Three-stage retrieval pipeline: dense + lexical fusion, then rerank.
-
-Per query batch:
-  1. Dense   — FAISS inner-product search over MiniLM page vectors (exact).
-  2. Lexical — BM25 page scores (stemmed; decade + bigram features).
-  3. Fuse    — per-query min-max normalize each signal, combine with weight alpha.
-  4. Rerank  — a cross-encoder rescores the top fused candidates per query; its
-               score is blended with the hybrid score before taking the top-k.
-"""
+"""Dense and lexical retrieval pipeline."""
 from __future__ import annotations
 
 from typing import List, Optional, Tuple
@@ -25,7 +17,7 @@ from .normalizer import Normalizer
 
 
 class RetrievalPipeline:
-    """Dense + lexical fusion with an optional cross-encoder rerank stage."""
+    """Ranks pages with fusion and optional reranking."""
 
     def __init__(
         self,
@@ -50,7 +42,14 @@ class RetrievalPipeline:
 
     @classmethod
     def from_index(cls, idx: LoadedIndex) -> "RetrievalPipeline":
-        """Assemble the pipeline from loaded artifacts (composition root)."""
+        """Create a pipeline from loaded artifacts.
+
+        Args:
+            idx: Loaded retrieval index.
+
+        Returns:
+            Retrieval pipeline.
+        """
         dense = DenseRetriever(idx.page_vectors, EmbeddingModel(idx.embedding_model))
         rr = idx.rerank
         reranker: Optional[Reranker] = None
@@ -70,7 +69,15 @@ class RetrievalPipeline:
         )
 
     def search(self, queries: List[str], *, top_k: int = K_EVAL) -> List[List[int]]:
-        """Return ranked page_id lists (best first) for each query."""
+        """Rank pages for queries.
+
+        Args:
+            queries: Search queries.
+            top_k: Number of page ids to return.
+
+        Returns:
+            Ranked page ids for each query.
+        """
         if not queries:
             return []
 
@@ -94,7 +101,6 @@ class RetrievalPipeline:
         self, queries: List[str], fused: np.ndarray, k: int, n_pages: int
     ) -> List[List[int]]:
         pool = int(min(self._pool, n_pages))
-        # Top-`pool` fused candidates per query (unordered slice, then re-sort).
         pool_idx = np.argpartition(-fused, pool - 1, axis=1)[:, :pool]
 
         pairs: List[Tuple[str, str]] = [

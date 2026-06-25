@@ -1,4 +1,4 @@
-"""Dev-only: per-query rank diagnostics for the gold pages."""
+"""Inspect ranks for relevant pages."""
 from __future__ import annotations
 
 import json
@@ -10,10 +10,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 

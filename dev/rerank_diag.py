@@ -1,4 +1,4 @@
-"""Dev-only: diagnose reranker behavior vs hybrid, and oracle ceiling per pool."""
+"""Inspect reranker behavior."""
 from __future__ import annotations
 
 import sys
@@ -9,12 +9,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows  # noqa: E402
-from eval import ndcg_at_k, mean_ndcg_at_k  # noqa: E402
-from utils import load_public_queries  # noqa: E402
+import faiss
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows
+from eval import ndcg_at_k, mean_ndcg_at_k
+from utils import load_public_queries
 
 POOL = 100
 
@@ -41,18 +41,15 @@ def main() -> None:
 
     ce = np.load(ROOT / "dev" / "cache" / "ce_cross-encoder__ms-marco-MiniLM-L-6-v2.npy")
 
-    # Oracle ceiling: perfectly order the top-k pool.
     for k in [10, 20, 50, 100]:
         oracle = []
         for qi in range(len(queries)):
             inpool = [int(p) for p in cand_ids[qi, :k] if int(p) in gold[qi]]
-            # ideal: all gold-in-pool first
             ranked = inpool + [-1] * 10
             oracle.append(ndcg_at_k(ranked, gold[qi]))
         print(f"oracle@10 within top-{k:>3} pool = {np.mean(oracle):.4f}")
     print()
 
-    # Per-query: hybrid vs pure-CE (k=20).
     k = 20
     print(f"{'#':>2} {'hyb':>5} {'ce':>5} {'nGold':>5} {'inPool':>6}  query")
     hyb_s, ce_s = [], []

@@ -1,8 +1,4 @@
-"""Compact, dependency-free Porter stemmer (stdlib only).
-
-Classic Porter (1980) algorithm. Used to test whether stemming the BM25
-tokenizer improves lexical recall on the Section B corpus.
-"""
+"""Porter stemming helper."""
 from __future__ import annotations
 
 VOWELS = "aeiou"
@@ -48,7 +44,6 @@ def _cvc(w: str) -> bool:
 def stem(w: str) -> str:
     if len(w) <= 2:
         return w
-    # Step 1a
     if w.endswith("sses"):
         w = w[:-2]
     elif w.endswith("ies"):
@@ -57,7 +52,6 @@ def stem(w: str) -> str:
         pass
     elif w.endswith("s"):
         w = w[:-1]
-    # Step 1b
     step1b_extra = False
     if w.endswith("eed"):
         if _measure(w[:-3]) > 0:
@@ -77,10 +71,8 @@ def stem(w: str) -> str:
             w = w[:-1]
         elif _measure(w) == 1 and _cvc(w):
             w += "e"
-    # Step 1c
     if w.endswith("y") and _contains_vowel(w[:-1]):
         w = w[:-1] + "i"
-    # Step 2
     s2 = {
         "ational": "ate", "tional": "tion", "enci": "ence", "anci": "ance",
         "izer": "ize", "bli": "ble", "alli": "al", "entli": "ent",
@@ -94,7 +86,6 @@ def stem(w: str) -> str:
             if _measure(w[:-len(suf)]) > 0:
                 w = w[:-len(suf)] + rep
             break
-    # Step 3
     s3 = {"icate": "ic", "ative": "", "alize": "al", "iciti": "ic",
           "ical": "ic", "ful": "", "ness": ""}
     for suf, rep in s3.items():
@@ -102,7 +93,6 @@ def stem(w: str) -> str:
             if _measure(w[:-len(suf)]) > 0:
                 w = w[:-len(suf)] + rep
             break
-    # Step 4
     s4 = ["al", "ance", "ence", "er", "ic", "able", "ible", "ant", "ement",
           "ment", "ent", "ou", "ism", "ate", "iti", "ous", "ive", "ize"]
     for suf in s4:
@@ -116,12 +106,10 @@ def stem(w: str) -> str:
     else:
         if w.endswith("ion") and _measure(w[:-3]) > 1 and w[-4] in "st":
             w = w[:-3]
-    # Step 5a
     if w.endswith("e"):
         stem_ = w[:-1]
         if _measure(stem_) > 1 or (_measure(stem_) == 1 and not _cvc(stem_)):
             w = stem_
-    # Step 5b
     if _measure(w) > 1 and _ends_double_consonant(w) and w.endswith("l"):
         w = w[:-1]
     return w

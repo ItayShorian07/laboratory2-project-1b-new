@@ -1,4 +1,4 @@
-"""Sentence embedding (sentence-transformers/all-MiniLM-L6-v2)."""
+"""Compatibility wrappers for text embeddings."""
 from __future__ import annotations
 
 from typing import Sequence
@@ -12,7 +12,7 @@ _EMBED_DIM = 384
 
 
 class EmbeddingModel:
-    """Lazily-loaded MiniLM encoder producing L2-normalized vectors."""
+    """Lazy sentence embedding model."""
 
     def __init__(self, model_name: str = EMBEDDING_MODEL_NAME) -> None:
         self._model_name = model_name
@@ -25,7 +25,15 @@ class EmbeddingModel:
         return self._model
 
     def encode(self, texts: Sequence[str], *, batch_size: int = 64) -> np.ndarray:
-        """Return L2-normalized embeddings, shape ``(n, dim)``."""
+        """Encode text into normalized vectors.
+
+        Args:
+            texts: Text values to encode.
+            batch_size: Model batch size.
+
+        Returns:
+            Float matrix with one row per text.
+        """
         if not texts:
             return np.zeros((0, _EMBED_DIM), dtype=np.float32)
         vectors = self.model.encode(
@@ -36,8 +44,6 @@ class EmbeddingModel:
             normalize_embeddings=True,
         )
         return np.asarray(vectors, dtype=np.float32)
-
-# Shared instance + function facades (back-compat for offline/dev callers).
 _DEFAULT_MODEL = EmbeddingModel()
 
 def get_model() -> SentenceTransformer:

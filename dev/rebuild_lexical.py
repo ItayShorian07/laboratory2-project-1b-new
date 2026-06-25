@@ -1,9 +1,4 @@
-"""Dev-only: rebuild BM25 (now stemmed) + page_texts, reusing cached embeddings.
-
-Page embeddings don't depend on the BM25 tokenizer, so we keep the committed
-page_vectors.npy and only regenerate the lexical index, the reranker page texts,
-and the config. Verifies page order against the existing page_ids.
-"""
+"""Rebuild lexical artifacts."""
 from __future__ import annotations
 
 import json
@@ -16,12 +11,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.index import (  # noqa: E402
+from core.index import (
     BM25_NAME, CONFIG_NAME, DEFAULT_ALPHA, DEFAULT_RERANK, PAGE_IDS_NAME,
     PAGE_TEXTS_NAME, RERANK_MAX_CHARS,
 )
-from core.lexical import BM25Index  # noqa: E402
-from utils import ARTIFACTS_DIR, entry_text, iter_entries  # noqa: E402
+from core.lexical import BM25Index
+from utils import ARTIFACTS_DIR, entry_text, iter_entries
 
 
 def main() -> None:

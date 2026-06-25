@@ -1,8 +1,4 @@
-"""Dev-only: embed all chunks once and cache for fast fusion sweeps.
-
-Encodes in blocks with flushed progress logging so the long CPU run can be
-monitored, and writes the result atomically at the end.
-"""
+"""Cache chunk embeddings for development."""
 from __future__ import annotations
 
 import sys
@@ -14,9 +10,9 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.chunk import chunk_corpus  # noqa: E402
-from core.embed import get_model  # noqa: E402
-from utils import iter_entries  # noqa: E402
+from core.chunk import chunk_corpus
+from core.embed import get_model
+from utils import iter_entries
 
 CACHE = ROOT / "dev" / "cache"
 BLOCK = 20000

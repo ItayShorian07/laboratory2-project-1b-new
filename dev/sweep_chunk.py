@@ -1,4 +1,4 @@
-"""Dev-only: sweep chunk-maxpool + BM25 fusion against public queries."""
+"""Sweep chunk retrieval settings."""
 from __future__ import annotations
 
 import json
@@ -12,20 +12,28 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file, mean_ndcg_at_k  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file, mean_ndcg_at_k
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
 
 
 def maxpool_to_pages(chunk_scores: np.ndarray, seg_starts: np.ndarray, n_pages: int) -> np.ndarray:
-    """Max chunk score per page. chunk_page_ids must be page-contiguous."""
-    # np.maximum.reduceat over contiguous segments.
+    """Pool chunk scores by page.
+
+    Args:
+        chunk_scores: Chunk score matrix.
+        seg_starts: Page segment starts.
+        n_pages: Number of pages.
+
+    Returns:
+        Page score matrix.
+    """
     pooled = np.maximum.reduceat(chunk_scores, seg_starts, axis=1)
-    return pooled  # (n_queries, n_pages)
+    return pooled
 
 
 def minmax_rows(m: np.ndarray) -> np.ndarray:
@@ -55,9 +63,8 @@ def main() -> None:
     page_ids_full = np.load(CACHE / "page_ids.npy")
     print(f"chunks: {cv.shape}, pages: {len(page_ids_full)}")
 
-    # Page segments (chunks are contiguous per page in build order).
     seg_starts = np.concatenate(([0], np.where(np.diff(cpid) != 0)[0] + 1))
-    page_order = cpid[seg_starts]  # page_id per segment, in order
+    page_order = cpid[seg_starts]
     assert len(page_order) == len(page_ids_full), (len(page_order), len(page_ids_full))
 
     rows = load_query_file(PUBLIC_QUERIES_PATH)
@@ -71,9 +78,7 @@ def main() -> None:
     print(f"dense chunk+maxpool: {time.perf_counter()-t0:.2f}s -> {dense.shape}")
 
     bm25 = BM25Index.build(texts)
-    # Align BM25 columns to page_order (texts.json is in page_ids_full order).
-    lex_full = bm25.score_batch(queries)  # columns = page_ids_full order
-    # page_ids_full and page_order are both sorted corpus order -> identical.
+    lex_full = bm25.score_batch(queries)
     assert np.array_equal(page_order, page_ids_full)
     lex = lex_full
 

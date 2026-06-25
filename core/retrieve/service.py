@@ -1,8 +1,4 @@
-"""Process-level retrieval entry point used by ``main.run``.
-
-Caches one assembled pipeline per artifacts directory so repeated calls within a
-process reuse the loaded index and FAISS structure.
-"""
+"""Process level retrieval service."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -31,6 +27,16 @@ def search_batch(
     top_k: int = K_EVAL,
     artifacts_dir: Optional[Path] = None,
 ) -> List[List[int]]:
+    """Rank pages for a batch of queries.
+
+    Args:
+        queries: Search queries.
+        top_k: Number of page ids to return.
+        artifacts_dir: Optional artifact directory.
+
+    Returns:
+        Ranked page ids for each query.
+    """
     if not queries:
         return []
     return _get_pipeline(artifacts_dir).search(queries, top_k=top_k)

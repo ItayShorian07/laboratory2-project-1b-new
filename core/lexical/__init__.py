@@ -1,8 +1,4 @@
-"""Lexical retrieval package: tokenization, Porter stemming, and BM25.
-
-Re-exports the public names so callers (and dev sweeps that monkeypatch
-``core.lexical.tokenize``) keep working after the split into submodules.
-"""
+"""Lexical retrieval package API."""
 from __future__ import annotations
 
 from .bm25 import BM25_B, BM25_K1, MAX_DOC_TOKENS, BM25Index

@@ -1,10 +1,4 @@
-"""Dev-only: evaluate cross-encoder rerankers on top of the hybrid retriever.
-
-Stage 1 (candidate generation): hybrid dense+BM25 fused ranking -> top-N page ids.
-Stage 2 (rerank): a CrossEncoder scores (query, page_text) for those N and reorders.
-We report NDCG@10 for pure-rerank and for a blend with the hybrid score, across
-candidate depths and models.
-"""
+"""Sweep reranker settings."""
 from __future__ import annotations
 
 import sys
@@ -16,22 +10,22 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-from sentence_transformers import CrossEncoder  # noqa: E402
+import faiss
+from sentence_transformers import CrossEncoder
 
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows  # noqa: E402
-from eval import mean_ndcg_at_k  # noqa: E402
-from utils import load_public_queries, iter_entries, entry_text  # noqa: E402
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows
+from eval import mean_ndcg_at_k
+from utils import load_public_queries, iter_entries, entry_text
 
 MODELS = [
     "cross-encoder/ms-marco-MiniLM-L-6-v2",
     "cross-encoder/ms-marco-MiniLM-L-12-v2",
 ]
-POOL = 100          # candidates fed to the reranker per query
-KS = [20, 50, 100]  # candidate depths to evaluate
-MAX_CHARS = 2000    # truncate page text fed to reranker (speed)
+POOL = 100
+KS = [20, 50, 100]
+MAX_CHARS = 2000
 
 
 def build_candidates():
@@ -54,8 +48,8 @@ def build_candidates():
 
     page_ids = idx.page_ids
     order = np.argsort(-fused, axis=1)[:, :max(KS)]
-    cand_ids = page_ids[order]                          # (q, POOL) page ids
-    cand_hyb = np.take_along_axis(fused, order, axis=1)  # hybrid score for blend
+    cand_ids = page_ids[order]
+    cand_hyb = np.take_along_axis(fused, order, axis=1)
     return queries, gold, cand_ids, cand_hyb
 
 
@@ -105,7 +99,6 @@ def main() -> None:
             np.save(cpath, ce_full)
 
         for k in KS:
-            # pure rerank within top-k pool
             pure = []
             blend = []
             for qi in range(len(queries)):
@@ -113,7 +106,6 @@ def main() -> None:
                 cs = ce_full[qi, :k]
                 o = np.argsort(-cs)
                 pure.append([int(ids[i]) for i in o[:10]])
-                # blend: minmax CE + minmax hybrid
                 cs_n = (cs - cs.min()) / (np.ptp(cs) or 1.0)
                 hy = cand_hyb[qi, :k]
                 hy_n = (hy - hy.min()) / (np.ptp(hy) or 1.0)

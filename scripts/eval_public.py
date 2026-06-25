@@ -1,4 +1,4 @@
-"""Self-evaluation on the 50 public queries (mean NDCG@10)."""
+"""Run local public query evaluation."""
 from __future__ import annotations
 
 import sys

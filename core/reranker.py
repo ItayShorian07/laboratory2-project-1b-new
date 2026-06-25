@@ -1,16 +1,4 @@
-"""Cross-encoder reranker (query-time second stage).
-
-The hybrid dense+BM25 stage has high recall but imperfect ordering (recall@100
-~0.93 vs NDCG@10 ~0.45 on the public queries). A cross-encoder reads each
-(query, page) pair jointly and rescores the top fused candidates. We use
-``cross-encoder/ms-marco-MiniLM-L-6-v2``: small (~80MB, loads within the
-query-time budget) and, on this corpus, a stronger reranker than larger
-general-purpose models that overfit to natural-QA passages.
-
-The reranker is *blended* with, not substituted for, the hybrid score: it
-sharpens clean single-answer queries but can mis-rank the templated multi-entity
-queries, so keeping a hybrid prior is more robust than pure rerank.
-"""
+"""Cross encoder reranking."""
 from __future__ import annotations
 
 from typing import List, Tuple
@@ -21,7 +9,7 @@ from .interfaces import Reranker
 
 
 class CrossEncoderReranker(Reranker):
-    """Lazily-loaded cross-encoder that scores (query, passage) pairs."""
+    """Lazy cross encoder reranker."""
 
     def __init__(self, model_name: str, *, max_length: int = 512, batch_size: int = 64) -> None:
         self.model_name = model_name
@@ -38,7 +26,14 @@ class CrossEncoderReranker(Reranker):
         return self._encoder
 
     def score_pairs(self, pairs: List[Tuple[str, str]]) -> np.ndarray:
-        """Return one relevance score per ``(query, passage)`` pair."""
+        """Score query and passage pairs.
+
+        Args:
+            pairs: Query and passage pairs.
+
+        Returns:
+            Relevance scores.
+        """
         if not pairs:
             return np.zeros(0, dtype=np.float32)
         scores = self.encoder.predict(
@@ -46,8 +41,6 @@ class CrossEncoderReranker(Reranker):
         )
         return np.asarray(scores, dtype=np.float32)
 
-
-# Cache one reranker per model name + function facade (back-compat for dev).
 _RERANKERS: dict[str, CrossEncoderReranker] = {}
 
 

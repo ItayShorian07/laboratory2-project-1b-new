@@ -1,8 +1,4 @@
-"""Offline index build (not timed at grading).
-
-Embeds every page with MiniLM, builds the BM25 index, and persists all artifacts
-described in :mod:`core.index.config`.
-"""
+"""Build retrieval artifacts."""
 from __future__ import annotations
 
 import json
@@ -35,7 +31,7 @@ from .config import (
 
 @dataclass
 class IndexBuilder:
-    """Embeds pages, builds the BM25 index, and persists all artifacts."""
+    """Builds and saves retrieval artifacts."""
 
     alpha: float = DEFAULT_ALPHA
     embedding_model: str = EMBEDDING_MODEL_NAME
@@ -48,6 +44,12 @@ class IndexBuilder:
         entries_dir: Optional[Path] = None,
         artifacts_dir: Optional[Path] = None,
     ) -> None:
+        """Build artifacts from corpus entries.
+
+        Args:
+            entries_dir: Optional corpus directory.
+            artifacts_dir: Optional output directory.
+        """
         out_dir = artifacts_dir or ensure_artifacts_dir()
         records = list(iter_entries(entries_dir))
 
@@ -84,5 +86,11 @@ def build_index(
     artifacts_dir: Optional[Path] = None,
     alpha: float = DEFAULT_ALPHA,
 ) -> None:
-    """Facade: build and persist all artifacts."""
+    """Build retrieval artifacts.
+
+    Args:
+        entries_dir: Optional corpus directory.
+        artifacts_dir: Optional output directory.
+        alpha: Dense score weight.
+    """
     IndexBuilder(alpha=alpha).build(entries_dir=entries_dir, artifacts_dir=artifacts_dir)

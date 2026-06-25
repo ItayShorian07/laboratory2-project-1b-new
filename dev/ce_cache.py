@@ -1,7 +1,4 @@
-"""Dev-only: score the hybrid top-POOL candidates with one reranker, cache to disk.
-
-Usage: python dev/ce_cache.py <hf-model-name> [max_length]
-"""
+"""Cache cross encoder scores for candidates."""
 from __future__ import annotations
 
 import sys
@@ -13,12 +10,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-from sentence_transformers import CrossEncoder  # noqa: E402
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows  # noqa: E402
-from utils import load_public_queries, iter_entries, entry_text  # noqa: E402
+import faiss
+from sentence_transformers import CrossEncoder
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows
+from utils import load_public_queries, iter_entries, entry_text
 
 POOL = 100
 MAX_CHARS = 2000

@@ -1,8 +1,4 @@
-"""Dev-only: clean ablation ladder on the current public queries (29).
-
-dense-only | bm25-only | hybrid | (+reranker via cached CE scores).
-Stemming is on in the loaded BM25 index.
-"""
+"""Run retrieval ablation checks."""
 from __future__ import annotations
 
 import sys
@@ -13,12 +9,12 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows, _minmax_1d  # noqa: E402
-from eval import mean_ndcg_at_k  # noqa: E402
-from utils import load_public_queries  # noqa: E402
+import faiss
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows, _minmax_1d
+from eval import mean_ndcg_at_k
+from utils import load_public_queries
 
 
 def topk(scores, page_ids, gold):

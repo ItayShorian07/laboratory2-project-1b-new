@@ -1,12 +1,4 @@
-"""BM25 lexical retriever (standard library + numpy only).
-
-BM25 complements the dense MiniLM retriever: it rewards exact overlap on rare
-tokens (specific numbers, coined names) that paraphrase-oriented embeddings blur.
-
-Query-time speed: all term-document weights are precomputed offline into a
-term-major (CSC-like) inverted index, so scoring a query is a handful of
-postings-list lookups plus a scatter-add, independent of corpus size.
-"""
+"""BM25 lexical retrieval."""
 from __future__ import annotations
 
 import json
@@ -18,26 +10,28 @@ import numpy as np
 from ..interfaces import PageScorer
 from .tokenizer import Tokenize
 
-# Cap tokens indexed per document: answer pages are short, while long distractor
-# articles would otherwise add millions of useless postings.
 MAX_DOC_TOKENS = 600
 
-# k1/b tuned with Optuna over the public queries (dev/optuna_tune.py).
 BM25_K1 = 2.0
 BM25_B = 0.75
 
 
 def _default_tokenize(text: str) -> List[str]:
-    """Resolve the package-level ``tokenize`` at call time so dev sweeps that
-    monkeypatch ``core.lexical.tokenize`` are honored (matches the old late
-    binding of the module-global tokenizer)."""
+    """Use the package tokenizer.
+
+    Args:
+        text: Text to tokenize.
+
+    Returns:
+        Tokens.
+    """
     from core.lexical import tokenize
 
     return tokenize(text)
 
 
 class BM25Index(PageScorer):
-    """BM25 with precomputed term-document weights in a term-major layout."""
+    """BM25 index with precomputed weights."""
 
     def __init__(
         self,
@@ -60,7 +54,6 @@ class BM25Index(PageScorer):
         self.b = b
         self._tokenize: Tokenize = tokenizer or _default_tokenize
 
-    # --- build -----------------------------------------------------------------
     @classmethod
     def build(
         cls,
@@ -71,14 +64,25 @@ class BM25Index(PageScorer):
         max_doc_tokens: int = MAX_DOC_TOKENS,
         tokenizer: Tokenize | None = None,
     ) -> "BM25Index":
+        """Build a BM25 index.
+
+        Args:
+            docs: Documents to index.
+            k1: Term frequency saturation.
+            b: Length normalization weight.
+            max_doc_tokens: Maximum tokens per document.
+            tokenizer: Optional tokenizer.
+
+        Returns:
+            BM25 index.
+        """
         tok: Tokenize = tokenizer or _default_tokenize
         vocab: Dict[str, int] = {}
         doc_len = np.zeros(len(docs), dtype=np.float32)
 
-        # First pass: vocabulary, per-doc term frequencies, doc lengths.
-        rows: List[int] = []  # doc index per posting
-        cols: List[int] = []  # term id per posting
-        tfs: List[int] = []   # term frequency per posting
+        rows: List[int] = []
+        cols: List[int] = []
+        tfs: List[int] = []
         for i, text in enumerate(docs):
             tokens = tok(text)[:max_doc_tokens]
             doc_len[i] = len(tokens)
@@ -105,10 +109,9 @@ class BM25Index(PageScorer):
         idf = np.maximum(idf, 1e-6)
 
         avgdl = float(doc_len.mean()) if n_docs else 1.0
-        denom = k1 * (1.0 - b + b * doc_len / (avgdl or 1.0))  # per-doc
+        denom = k1 * (1.0 - b + b * doc_len / (avgdl or 1.0))
         weights = idf[col_arr] * (tf_arr * (k1 + 1.0)) / (tf_arr + denom[row_arr])
 
-        # Sort postings by term id to form the term-major (CSC) inverted index.
         order = np.argsort(col_arr, kind="stable")
         col_sorted = col_arr[order]
         doc_indices = row_arr[order].astype(np.int32)
@@ -128,9 +131,15 @@ class BM25Index(PageScorer):
             tokenizer=tokenizer,
         )
 
-    # --- score -----------------------------------------------------------------
     def score(self, queries: Sequence[str]) -> np.ndarray:
-        """Return a dense ``(n_queries, n_docs)`` BM25 score matrix."""
+        """Score documents for queries.
+
+        Args:
+            queries: Search queries.
+
+        Returns:
+            BM25 score matrix.
+        """
         scores = np.zeros((len(queries), self.num_docs), dtype=np.float32)
         for qi, query in enumerate(queries):
             row = scores[qi]
@@ -146,11 +155,14 @@ class BM25Index(PageScorer):
                 np.add.at(row, self.doc_indices[start:end], self.weights[start:end])
         return scores
 
-    # Back-compat alias for the previous public method name.
     score_batch = score
 
-    # --- persist ---------------------------------------------------------------
     def save(self, path: Path) -> None:
+        """Save the index.
+
+        Args:
+            path: Output path.
+        """
         np.savez_compressed(
             path,
             term_indptr=self.term_indptr,
@@ -167,6 +179,15 @@ class BM25Index(PageScorer):
 
     @classmethod
     def load(cls, path: Path, *, tokenizer: Tokenize | None = None) -> "BM25Index":
+        """Load an index.
+
+        Args:
+            path: Index path.
+            tokenizer: Optional tokenizer.
+
+        Returns:
+            BM25 index.
+        """
         data = np.load(path)
         meta = json.loads(path.with_suffix(".meta.json").read_text(encoding="utf-8"))
         return cls(

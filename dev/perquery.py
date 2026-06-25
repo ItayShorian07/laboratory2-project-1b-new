@@ -1,4 +1,4 @@
-"""Dev-only: per-query NDCG breakdown for the best fusion config."""
+"""Inspect per query evaluation scores."""
 from __future__ import annotations
 
 import json
@@ -10,10 +10,10 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core.embed import embed_queries  # noqa: E402
-from eval import load_query_file, ndcg_at_k  # noqa: E402
-from core.lexical import BM25Index  # noqa: E402
-from utils import PUBLIC_QUERIES_PATH  # noqa: E402
+from core.embed import embed_queries
+from eval import load_query_file, ndcg_at_k
+from core.lexical import BM25Index
+from utils import PUBLIC_QUERIES_PATH
 
 CACHE = ROOT / "dev" / "cache"
 K = 10
@@ -51,7 +51,6 @@ def main():
     for nd, i, q in res:
         print(f"  {nd:.3f}  [{i:2d}] {q[:78]}")
     print(f"\nmean = {sum(r[0] for r in res)/len(res):.4f}")
-    # bucket: specific (has a digit) vs generic
     spec = [r[0] for r in res if any(ch.isdigit() for ch in r[2])]
     gen = [r[0] for r in res if not any(ch.isdigit() for ch in r[2])]
     print(f"queries w/ number: n={len(spec)} mean={np.mean(spec):.4f}")

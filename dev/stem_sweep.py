@@ -1,8 +1,4 @@
-"""Dev-only: does stemming the BM25 tokenizer help recall / hybrid NDCG?
-
-Rebuilds BM25 with a stemming tokenizer (monkeypatched) and compares against the
-current index on both hybrid NDCG@10 and recall@k.
-"""
+"""Sweep stemming changes."""
 from __future__ import annotations
 
 import sys
@@ -14,14 +10,14 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import faiss  # noqa: E402
-import core.lexical as lexical  # noqa: E402
-from porter import stem  # noqa: E402
-from core.index import load_index  # noqa: E402
-from core.embed import embed_queries  # noqa: E402
-from core.retrieve import _minmax_rows  # noqa: E402
-from eval import mean_ndcg_at_k  # noqa: E402
-from utils import load_public_queries, iter_entries, entry_text  # noqa: E402
+import faiss
+import core.lexical as lexical
+from porter import stem
+from core.index import load_index
+from core.embed import embed_queries
+from core.retrieve import _minmax_rows
+from eval import mean_ndcg_at_k
+from utils import load_public_queries, iter_entries, entry_text
 
 _stem_cache: dict[str, str] = {}
 
@@ -86,7 +82,6 @@ def main():
     page_texts = [entry_text(r) for r in iter_entries()]
 
     ks = [10, 20, 50, 100]
-    # Baseline (current, already-built bm25 from artifacts).
     fused0 = hybrid_scores(queries, idx, idx.bm25)
     base = mean_ndcg_at_k([[int(page_ids) for page_ids in
                             idx.page_ids[np.argsort(-fused0[qi])[:10]]]
@@ -94,7 +89,6 @@ def main():
     rec0 = recall_table(fused0, idx.page_ids, gold, ks)
     print(f"current  NDCG@10={base:.4f}  recall={rec0}")
 
-    # Stemmed BM25.
     orig = lexical.tokenize
     lexical.tokenize = make_stem_tokenizer(orig)
     t0 = time.time()
