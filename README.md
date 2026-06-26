@@ -10,7 +10,7 @@
 <tr><td><b>Stack</b></td><td>MiniLM embeddings · FAISS · custom NumPy BM25 · MS-MARCO cross-encoder</td></tr>
 </table>
 
-🎬 **Video presentation:** <!-- TODO: paste public video link here -->
+ **Video presentation:** <!-- TODO: paste public video link here -->
 
 ---
 
@@ -127,7 +127,7 @@ and run within the query-time budget.
 
 ---
 
-## 📊 Results — public 29 queries, mean NDCG@10
+## Results — public 29 queries, mean NDCG@10
 
 | Configuration | NDCG@10 |
 |---|:---:|
