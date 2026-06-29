@@ -10,7 +10,8 @@
 <tr><td><b>Stack</b></td><td>MiniLM embeddings · FAISS · custom NumPy BM25 · MS-MARCO cross-encoder</td></tr>
 </table>
 
- **Video presentation:** <!-- TODO: paste public video link here -->
+ **Video presentation:** [Watch the video presentation](https://drive.google.com/file/d/1LoiHyOv0195e0cim7bZIJgsP-kGY9A77/view?usp=sharing)
+
 
 ---
 
