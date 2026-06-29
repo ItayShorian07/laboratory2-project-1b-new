@@ -21,12 +21,13 @@ This project **requires an NVIDIA GPU with CUDA** to embed and rerank within the
 60 s query-time budget. The pinned dependencies in `requirements.txt` were defined
 and verified against:
 
-| Component | Version |
-|-----------|---------|
-| **CUDA** | **12.2** |
-| **GPU** | **NVIDIA Tesla M60** |
+| Component  | Version              |
+|------------|----------------------|
+| **CUDA**   | **12.2**             |
+| **GPU**    | **NVIDIA Tesla M60** |
+| **Python** | **3.10.11**          |
 
-Other CUDA versions / GPUs may work but are untested — match the CUDA build of
+Other CUDA versions / GPUs / Python versions may work but are untested — match the CUDA build of
 your deep-learning stack (PyTorch) to your driver, and reinstall the corresponding
 wheels if your environment differs.
 
