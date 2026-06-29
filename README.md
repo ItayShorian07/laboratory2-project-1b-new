@@ -6,7 +6,7 @@
 
 <table>
 <tr><td><b>Final score</b></td><td>NDCG@10 = <b>0.485</b> (29 public queries)</td></tr>
-<tr><td><b>Query latency</b></td><td>seconds on GPU · well under the 60 s budget</td></tr>
+<tr><td><b>Query latency</b></td><td>~28 seconds on GPU · under the 60 s budget</td></tr>
 <tr><td><b>Stack</b></td><td>MiniLM embeddings · FAISS · custom NumPy BM25 · MS-MARCO cross-encoder</td></tr>
 </table>
 
@@ -35,7 +35,8 @@ wheels if your environment differs.
 ## Quickstart
 
 ```bash
-cd "Lab_1_Part_B"
+git clone https://github.com/ItayShorian07/laboratory2_project_1b.git
+cd "laboratory2_project_1b"
 pip install -r requirements.txt      # numpy · sentence-transformers · faiss-cpu
 ```
 
@@ -44,21 +45,15 @@ directly — **the index is not rebuilt at grading time:**
 
 ```bash
 python scripts/eval_public.py
-# public_queries=29
-# mean_ndcg@10=0.4854
-# query_phase_time ≈ 130 s CPU (this machine) / a few seconds on the grading GPU
 ```
 
 Two models download from the HuggingFace hub on first use (not shipped):
 `all-MiniLM-L6-v2` (embeddings, ~80 MB) and `ms-marco-MiniLM-L-6-v2` (reranker,
 ~80 MB). The reranker is deliberately small so its download + load + inference
-fit the query-time budget; on the grading GPU it runs ~20–30× faster than the CPU
-number above.
+fit the query-time budget.
 
-> **Rebuild (optional, offline only):** `python scripts/build_index.py` —
-> ≈13 min CPU / ~1–2 min GPU. Only the page-embedding stage is GPU-accelerated;
-> the BM25 build and disk I/O are CPU-bound.
-
+> **Rebuild (optional, offline only):** 
+> `python scripts/build_index.py`
 ---
 
 ## Pipeline
